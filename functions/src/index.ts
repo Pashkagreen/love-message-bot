@@ -11,11 +11,14 @@ import dotenv from "dotenv";
 import {message} from "telegraf/filters";
 import {db, messagesCollection} from "./utils/db";
 import {bot, CHAT_ID} from "./utils/telegram";
+import {addMessagesToFirestore, resetMessages} from "./utils/firestore";
 
 /**
  * Load envs
  */
 dotenv.config();
+
+const cronTime = 19;
 
 bot.command("addlove", async (ctx: Context) => {
   if (ctx.has(message("text"))) {
@@ -51,6 +54,24 @@ bot.command("getchatid", async (ctx) => {
   }
 });
 
+bot.on("new_chat_members", async (ctx) => {
+  const newMembers = ctx.message.new_chat_members;
+  const querySnapshot = await getDocs(messagesCollection);
+  const dbLength = querySnapshot.docs.length;
+
+  for (const member of newMembers) {
+    const welcomeMessage = `Привет, ${member.first_name}! ❤️ Я - виртуальный Паша, который будет говорить тебе милости перед сном! В моей базе находится ${dbLength} сообщений. Я пишу милоту каждый день в ${cronTime}:00 UTC. \nДополнительную милоту можно получить, вызвав команду "/sendlove". \nДо встречи! 😊`;
+
+    try {
+      await ctx.reply(welcomeMessage);
+      console.log(`Sent welcome message to ${member.first_name}`);
+    } catch (error) {
+      console.error("Error sending welcome message:", error);
+    }
+  }
+});
+
+
 /**
  * Send random love message
  */
@@ -65,9 +86,8 @@ async function sendLoveMessage() {
       console.log("No new love messages left! Resetting all messages... ❤️");
 
       // eslint-disable-next-line max-len
-      await bot.telegram.sendMessage(CHAT_ID, "No new love messages left! Resetting all messages... Please, try again... ❤️");
+      await bot.telegram.sendMessage(CHAT_ID, "Вы получили все возможные комплименты! Идет сброс статистики отправленных сообщений... ❤️");
       await resetMessages();
-      return;
     }
 
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
@@ -82,26 +102,29 @@ async function sendLoveMessage() {
 }
 
 /**
- * Reset already sent messages status and include them into dataset
+ * Method for importing loveMessages as a string[]
  */
-async function resetMessages() {
+export const importLoveMessages = onRequest(async (req, res): Promise<any> => {
   try {
-    const querySnapshot = await getDocs(messagesCollection);
-    for (const docSnapshot of querySnapshot.docs) {
-      const messageDocRef = doc(db, "loveMessages", docSnapshot.id);
-      await updateDoc(messageDocRef, {sent: false});
+    const {messages} = req.body;
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({error: "Invalid input. Expected an array of messages."});
     }
-    console.log("All messages have been reset to unsent.");
+
+    await addMessagesToFirestore(messages);
+    res.status(200).json({message: "✅ Messages successfully added to Firestore!"});
   } catch (error) {
-    console.error("Error resetting messages:", error);
+    console.error("❌ Error processing request:", error);
+    res.status(500).json({error: "Internal Server Error"});
   }
-}
+});
 
 /**
  * Sends love message daily at 19:00 UTC+0
  */
 export const scheduledLoveMessage = onSchedule(
-  {schedule: "0 19 * * *", timeZone: "UTC"},
+  {schedule: `0 ${cronTime} * * *`, timeZone: "UTC"},
   async () => {
     console.log("Sending daily love message...");
     await sendLoveMessage();
