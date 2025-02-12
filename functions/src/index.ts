@@ -88,6 +88,8 @@ async function sendLoveMessage() {
       // eslint-disable-next-line max-len
       await bot.telegram.sendMessage(CHAT_ID, "Вы получили все возможные комплименты! Идет сброс статистики отправленных сообщений... Пожалуйста, попробуйте еще раз ❤️");
       await resetMessages();
+
+      return;
     }
 
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
