@@ -86,7 +86,7 @@ async function sendLoveMessage() {
       console.log("No new love messages left! Resetting all messages... ❤️");
 
       // eslint-disable-next-line max-len
-      await bot.telegram.sendMessage(CHAT_ID, "Вы получили все возможные комплименты! Идет сброс статистики отправленных сообщений... ❤️");
+      await bot.telegram.sendMessage(CHAT_ID, "Вы получили все возможные комплименты! Идет сброс статистики отправленных сообщений... Пожалуйста, попробуйте еще раз ❤️");
       await resetMessages();
     }
 
