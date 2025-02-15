@@ -18,7 +18,7 @@ import {addMessagesToFirestore, resetMessages} from "./utils/firestore";
  */
 dotenv.config();
 
-const cronTime = 19;
+const cronTime = 21;
 
 bot.command("addlove", async (ctx: Context) => {
   if (ctx.has(message("text"))) {
@@ -123,7 +123,7 @@ export const importLoveMessages = onRequest(async (req, res): Promise<any> => {
 });
 
 /**
- * Sends love message daily at 19:00 UTC+0
+ * Sends love message daily at 21:00 UTC+0
  */
 export const scheduledLoveMessage = onSchedule(
   {schedule: `0 ${cronTime} * * *`, timeZone: "UTC"},

@@ -14,3 +14,6 @@ functions/.env
 
 # IDE trash
 .idea
+
+# Scripts
+/scripts/messages.txt

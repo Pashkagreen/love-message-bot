@@ -15,5 +15,5 @@ fs.readFile(filePath, 'utf8', (err, data) => {
         .map(line => line.replace(/^.*?: /, '').trim())
         .filter(msg => msg.length > 0);
 
-    console.log(messages);
+    console.log(JSON.stringify(messages, null, 2));
 });
